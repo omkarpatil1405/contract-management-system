@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'View Contract — ' + ${contract.title}">View Contract — CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}" th:with="activePage=''"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/navbar :: navbar}" th:with="pageTitle='View Contract'"></div>
+
+            <div class="content-area">
+                <div class="contract-detail animate-fade-in">
+                    <!-- Header -->
+                    <div class="contract-detail-header">
+                        <div class="contract-detail-title-row">
+                            <div>
+                                <h2 th:text="${contract.title}">Contract Title</h2>
+                                <p th:if="${contract.description != null && !contract.description.isEmpty()}"
+                                    class="contract-detail-desc" th:text="${contract.description}">Description text</p>
+                            </div>
+                            <span class="badge" th:classappend="${contract.status.name() == 'DRAFT'} ? 'badge-gray' :
+                                          (${contract.status.name() == 'SIGNED'} ? 'badge-blue' :
+                                          (${contract.status.name() == 'RUNNING'} ? 'badge-green' : 'badge-red'))"
+                                th:text="${contract.status.displayName}">Status</span>
+                        </div>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="contract-detail-body">
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label"><i class="fas fa-calendar-check"></i> Start Date</span>
+                                <span class="detail-value" th:text="${contract.startDate}">2024-01-01</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label"><i class="fas fa-calendar-xmark"></i> End Date</span>
+                                <span class="detail-value" th:text="${contract.endDate}">2024-12-31</span>
+                            </div>
+                            <div class="detail-item" th:if="${contract.party != null}">
+                                <span class="detail-label"><i class="fas fa-users"></i> Party</span>
+                                <span class="detail-value" th:text="${contract.party.displayName}">Internal</span>
+                            </div>
+                            <div class="detail-item"
+                                th:if="${contract.contractType != null && !contract.contractType.isEmpty()}">
+                                <span class="detail-label"><i class="fas fa-tag"></i> Contract Type</span>
+                                <span class="detail-value" th:text="${contract.contractType}">Service</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label"><i class="fas fa-user"></i> Owner</span>
+                                <span class="detail-value" th:text="${contract.user.fullName}">User Name</span>
+                            </div>
+                            <div class="detail-item"
+                                th:if="${contract.fileName != null && !contract.fileName.isEmpty()}">
+                                <span class="detail-label"><i class="fas fa-paperclip"></i> Attachment</span>
+                                <span class="detail-value">
+                                    <a th:href="@{/contracts/download/{fn}(fn=${contract.fileName})}" class="file-link">
+                                        <i class="fas fa-download"></i>
+                                        <span th:text="${contract.fileName}">file.pdf</span>
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="contract-detail-footer">
+                        <a th:href="@{/dashboard}" class="btn btn-ghost">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                        <div class="contract-detail-actions">
+                            <a th:href="@{/contracts/edit/{id}(id=${contract.id})}" class="btn btn-outline btn-sm">
+                                <i class="fas fa-pen"></i> Edit
+                            </a>
+                            <form th:if="${currentUser.role.name() == 'ADMIN' || contract.user.id == currentUser.id}"
+                                th:action="@{/contracts/delete/{id}(id=${contract.id})}" method="post"
+                                style="display:inline"
+                                onsubmit="return confirm('Are you sure you want to delete this contract?')">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash-can"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports — CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}" th:with="activePage='reports'"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/navbar :: navbar}" th:with="pageTitle='Reports & Analytics'"></div>
+
+            <div class="content-area">
+                <!-- Summary Stats -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card stat-total">
+                        <div class="stat-icon"><i class="fas fa-file-lines"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.total}">0</h3>
+                            <p>Total</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-running">
+                        <div class="stat-icon"><i class="fas fa-circle-play"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.running}">0</h3>
+                            <p>Running</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-signed">
+                        <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.signed}">0</h3>
+                            <p>Signed</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-expired">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.expired}">0</h3>
+                            <p>Expired</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <!-- Status Distribution (Doughnut) -->
+                    <div class="chart-card animate-fade-in">
+                        <div class="chart-card-header">
+                            <h3><i class="fas fa-chart-pie"></i> Status Distribution</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Party Breakdown (Bar) -->
+                    <div class="chart-card animate-fade-in">
+                        <div class="chart-card-header">
+                            <h3><i class="fas fa-chart-bar"></i> By Party</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="partyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Contract Type (Polar Area) -->
+                    <div class="chart-card animate-fade-in">
+                        <div class="chart-card-header">
+                            <h3><i class="fas fa-chart-area"></i> By Contract Type</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="typeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Overview (Horizontal Bar) -->
+                    <div class="chart-card animate-fade-in">
+                        <div class="chart-card-header">
+                            <h3><i class="fas fa-ranking-star"></i> Overview</h3>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="overviewChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const draftCount = /*[[${draftCount}]]*/ 0;
+        const signedCount = /*[[${signedCount}]]*/ 0;
+        const runningCount = /*[[${runningCount}]]*/ 0;
+        const expiredCount = /*[[${expiredCount}]]*/ 0;
+
+        const internalCount = /*[[${internalCount}]]*/ 0;
+        const externalCount = /*[[${externalCount}]]*/ 0;
+        const govCount = /*[[${govCount}]]*/ 0;
+        const vendorCount = /*[[${vendorCount}]]*/ 0;
+        const clientCount = /*[[${clientCount}]]*/ 0;
+        const noPartyCount = /*[[${noPartyCount}]]*/ 0;
+
+        const typeCounts = /*[[${typeCounts}]]*/ {};
+
+        Chart.defaults.color = '#888888';
+        Chart.defaults.borderColor = '#222222';
+        Chart.defaults.font.family = "'Geist', 'Inter', sans-serif";
+
+        // ── Status Doughnut ──
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Draft', 'Signed', 'Running', 'Expired'],
+                datasets: [{
+                    data: [draftCount, signedCount, runningCount, expiredCount],
+                    backgroundColor: ['#555555', '#3b82f6', '#22c55e', '#ef4444'],
+                    borderColor: '#111111',
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } }
+                }
+            }
+        });
+
+        // ── Party Bar Chart ──
+        new Chart(document.getElementById('partyChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Internal', 'External', 'Government', 'Vendor', 'Client', 'Unset'],
+                datasets: [{
+                    label: 'Contracts',
+                    data: [internalCount, externalCount, govCount, vendorCount, clientCount, noPartyCount],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(168, 85, 247, 0.7)',
+                        'rgba(234, 179, 8, 0.7)',
+                        'rgba(34, 197, 94, 0.7)',
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(85, 85, 85, 0.5)'
+                    ],
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#1a1a1a' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // ── Type Polar Area (Dynamic) ──
+        const typeLabels = Object.keys(typeCounts);
+        const typeData = Object.values(typeCounts);
+        const typeColors = [
+            'rgba(59, 130, 246, 0.6)', 'rgba(34, 197, 94, 0.6)', 'rgba(239, 68, 68, 0.6)',
+            'rgba(234, 179, 8, 0.6)', 'rgba(168, 85, 247, 0.6)', 'rgba(236, 72, 153, 0.6)',
+            'rgba(14, 165, 233, 0.6)', 'rgba(249, 115, 22, 0.6)', 'rgba(139, 92, 246, 0.6)',
+            'rgba(85, 85, 85, 0.4)'
+        ];
+        new Chart(document.getElementById('typeChart'), {
+            type: 'polarArea',
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    data: typeData,
+                    backgroundColor: typeLabels.map((_, i) => typeColors[i % typeColors.length]),
+                    borderColor: '#111111',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
+                },
+                scales: { r: { grid: { color: '#1a1a1a' }, ticks: { display: false } } }
+            }
+        });
+
+        // ── Overview Horizontal Bar ──
+        new Chart(document.getElementById('overviewChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Draft', 'Signed', 'Running', 'Expired'],
+                datasets: [{
+                    label: 'Count',
+                    data: [draftCount, signedCount, runningCount, expiredCount],
+                    backgroundColor: ['rgba(85,85,85,0.6)', 'rgba(59,130,246,0.6)', 'rgba(34,197,94,0.6)', 'rgba(239,68,68,0.6)'],
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#1a1a1a' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        }
+    </script>
+</body>
+
+</html>

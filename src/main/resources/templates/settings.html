@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}" th:with="activePage='settings'"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/navbar :: navbar}" th:with="pageTitle='Settings'"></div>
+
+            <div class="content-area">
+                <!-- Alerts -->
+                <div th:if="${success}" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${success}"></span>
+                </div>
+                <div th:if="${error}" class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${error}"></span>
+                </div>
+
+                <div class="settings-grid">
+                    <!-- Profile Card -->
+                    <div class="form-card animate-fade-in">
+                        <div class="form-card-header">
+                            <h3><i class="fas fa-user"></i> Profile Information</h3>
+                        </div>
+                        <form th:action="@{/settings/profile}" method="post">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="fullName"><i class="fas fa-id-card"></i> Full Name</label>
+                                    <input type="text" id="fullName" name="fullName" th:value="${currentUser.fullName}"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="username"><i class="fas fa-at"></i> Username</label>
+                                    <input type="text" id="username" th:value="${currentUser.username}" disabled
+                                        class="input-disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                                    <input type="email" id="email" name="email" th:value="${currentUser.email}"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-shield-halved"></i> Role</label>
+                                    <input type="text" th:value="${currentUser.role.name()}" disabled
+                                        class="input-disabled">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-calendar"></i> Joined</label>
+                                    <input type="text"
+                                        th:value="${#temporals.format(currentUser.createdAt, 'dd MMM yyyy')}" disabled
+                                        class="input-disabled">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Password Card -->
+                    <div class="form-card animate-fade-in">
+                        <div class="form-card-header">
+                            <h3><i class="fas fa-lock"></i> Change Password</h3>
+                        </div>
+                        <form th:action="@{/settings/password}" method="post">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="currentPassword"><i class="fas fa-key"></i> Current Password</label>
+                                    <input type="password" id="currentPassword" name="currentPassword"
+                                        placeholder="Enter current password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newPassword"><i class="fas fa-lock"></i> New Password</label>
+                                    <input type="password" id="newPassword" name="newPassword"
+                                        placeholder="Min 6 characters" required minlength="6">
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
+                                    <input type="password" id="confirmPassword" name="confirmPassword"
+                                        placeholder="Repeat new password" required minlength="6">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-key"></i> Change Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        }
+    </script>
+</body>
+
+</html>

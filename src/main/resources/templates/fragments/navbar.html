@@ -1,0 +1,22 @@
+<!-- Navbar Fragment -->
+<div th:fragment="navbar" class="navbar">
+    <div class="navbar-left">
+        <button class="mobile-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h2 th:text="${pageTitle}">Dashboard</h2>
+    </div>
+    <div class="navbar-right">
+        <div class="user-info">
+            <div class="user-details">
+                <span class="user-name" th:text="${currentUser.fullName}">User</span>
+                <span class="user-role badge"
+                    th:classappend="${currentUser.role.name() == 'ADMIN'} ? 'badge-purple' : 'badge-blue'"
+                    th:text="${currentUser.role}">ROLE</span>
+            </div>
+        </div>
+        <a th:href="@{/logout}" class="btn btn-ghost btn-sm" title="Logout">
+            <i class="fas fa-arrow-right-from-bracket"></i>
+        </a>
+    </div>
+</div>

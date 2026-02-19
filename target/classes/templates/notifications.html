@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications — CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}" th:with="activePage='notifications'"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/navbar :: navbar}" th:with="pageTitle='Notifications'"></div>
+
+            <div class="content-area">
+                <!-- Alerts -->
+                <div th:if="${success}" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${success}"></span>
+                </div>
+
+                <!-- Header -->
+                <div class="notif-header">
+                    <div class="notif-header-left">
+                        <h3>
+                            <i class="fas fa-bell"></i> All Notifications
+                            <span th:if="${unreadCount > 0}" class="badge badge-blue"
+                                th:text="${unreadCount} + ' unread'">0 unread</span>
+                        </h3>
+                    </div>
+                    <div class="notif-header-right" th:if="${unreadCount > 0}">
+                        <form th:action="@{/notifications/read-all}" method="post">
+                            <button type="submit" class="btn btn-outline btn-sm">
+                                <i class="fas fa-check-double"></i> Mark all read
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Notification List -->
+                <div class="notif-list">
+                    <div th:if="${#lists.isEmpty(notifications)}" class="notif-empty">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No notifications yet</p>
+                        <small class="text-muted">Contract expiry alerts will appear here automatically</small>
+                    </div>
+
+                    <div th:each="n : ${notifications}" class="notif-item animate-fade-in"
+                        th:classappend="${!n.read} ? 'notif-unread' : ''">
+                        <div class="notif-icon" th:classappend="'notif-icon-' + ${n.type.name().toLowerCase()}">
+                            <i
+                                th:class="${n.type.name() == 'DANGER'} ? 'fas fa-circle-exclamation' :
+                                         (${n.type.name() == 'WARNING'} ? 'fas fa-triangle-exclamation' :
+                                         (${n.type.name() == 'SUCCESS'} ? 'fas fa-circle-check' : 'fas fa-circle-info'))"></i>
+                        </div>
+                        <div class="notif-body">
+                            <div class="notif-title" th:text="${n.title}">Title</div>
+                            <div class="notif-message" th:text="${n.message}">Message</div>
+                            <div class="notif-time text-muted"
+                                th:text="${#temporals.format(n.createdAt, 'dd MMM yyyy, hh:mm a')}">Time</div>
+                        </div>
+                        <div class="notif-actions">
+                            <form th:if="${!n.read}" th:action="@{/notifications/read/{id}(id=${n.id})}" method="post"
+                                style="display:inline">
+                                <button type="submit" class="btn btn-sm btn-ghost" title="Mark as read">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <form th:action="@{/notifications/delete/{id}(id=${n.id})}" method="post"
+                                style="display:inline" onsubmit="return confirm('Delete this notification?')">
+                                <button type="submit" class="btn btn-sm btn-ghost" title="Delete">
+                                    <i class="fas fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        }
+    </script>
+</body>
+
+</html>

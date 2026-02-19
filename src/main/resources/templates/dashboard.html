@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/sidebar :: sidebar}" th:with="activePage='dashboard'"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Navbar -->
+            <div th:replace="~{fragments/navbar :: navbar}" th:with="pageTitle='Dashboard'"></div>
+
+            <div class="content-area">
+                <!-- Alerts -->
+                <div th:if="${success}" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${success}"></span>
+                </div>
+                <div th:if="${error}" class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${error}"></span>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-total">
+                        <div class="stat-icon"><i class="fas fa-file-lines"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.total}">0</h3>
+                            <p>Total</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-running">
+                        <div class="stat-icon"><i class="fas fa-circle-play"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.running}">0</h3>
+                            <p>Running</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-signed">
+                        <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.signed}">0</h3>
+                            <p>Signed</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-expired">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-info">
+                            <h3 th:text="${stats.expired}">0</h3>
+                            <p>Expired</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar animate-fade-in">
+                    <form th:action="@{/dashboard}" method="get" class="filter-form">
+                        <div class="filter-row">
+                            <!-- Search Input -->
+                            <div class="filter-field filter-search">
+                                <div class="search-input-wrapper">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" name="keyword" placeholder="Search contracts..."
+                                        th:value="${keyword}" autocomplete="off">
+                                </div>
+                            </div>
+
+                            <!-- Status Dropdown -->
+                            <div class="filter-field">
+                                <select name="status">
+                                    <option value="">All Statuses</option>
+                                    <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.displayName}"
+                                        th:selected="${selectedStatus != null && selectedStatus == s.name()}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Party Dropdown -->
+                            <div class="filter-field">
+                                <select name="party">
+                                    <option value="">All Parties</option>
+                                    <option th:each="p : ${parties}" th:value="${p.name()}" th:text="${p.displayName}"
+                                        th:selected="${selectedParty != null && selectedParty == p.name()}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Contract Type Dropdown -->
+                            <div class="filter-field">
+                                <select name="contractType">
+                                    <option value="">All Types</option>
+                                    <option th:each="ct : ${contractTypes}" th:value="${ct}" th:text="${ct}"
+                                        th:selected="${selectedContractType != null && selectedContractType == ct}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- From Date -->
+                            <div class="filter-field">
+                                <input type="date" name="fromDate" th:value="${fromDate}" placeholder="From date">
+                            </div>
+
+                            <!-- To Date -->
+                            <div class="filter-field">
+                                <input type="date" name="toDate" th:value="${toDate}" placeholder="To date">
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="filter-actions">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                                <a th:if="${hasFilters}" th:href="@{/dashboard}" class="filter-reset">
+                                    <i class="fas fa-times"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Contracts Table Section -->
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3><i class="fas fa-list"></i> Contracts</h3>
+                        <div class="table-actions">
+                            <span class="badge badge-gray"
+                                th:text="'Showing ' + ${#lists.size(contracts)} + ' contracts'">0 contracts</span>
+                            <a th:href="@{/contracts/add}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> New
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Status</th>
+                                    <th th:if="${currentUser.role.name() == 'ADMIN'}">Owner</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(contracts)}">
+                                    <td th:colspan="${currentUser.role.name() == 'ADMIN'} ? 7 : 6" class="empty-state">
+                                        <i class="fas fa-inbox"></i>
+                                        <p>No contracts found</p>
+                                    </td>
+                                </tr>
+                                <tr th:each="contract, iter : ${contracts}"
+                                    th:onclick="'window.location.href=\'/contracts/view/' + ${contract.id} + '\''"
+                                    class="clickable-row">
+                                    <td th:text="${iter.index + 1}">1</td>
+                                    <td>
+                                        <a th:href="@{/contracts/view/{id}(id=${contract.id})}"
+                                            class="contract-title-link">
+                                            <strong th:text="${contract.title}">Title</strong>
+                                        </a>
+                                        <small
+                                            th:if="${contract.description != null && !contract.description.isEmpty()}"
+                                            class="text-muted"
+                                            th:text="${#strings.abbreviate(contract.description, 50)}"></small>
+                                    </td>
+                                    <td th:text="${contract.startDate}">2024-01-01</td>
+                                    <td th:text="${contract.endDate}">2024-12-31</td>
+                                    <td>
+                                        <span class="badge"
+                                            th:classappend="${contract.status.name() == 'DRAFT'} ? 'badge-gray' :
+                                                      (${contract.status.name() == 'SIGNED'} ? 'badge-blue' :
+                                                      (${contract.status.name() == 'RUNNING'} ? 'badge-green' : 'badge-red'))"
+                                            th:text="${contract.status.displayName}">Status</span>
+                                    </td>
+                                    <td th:if="${currentUser.role.name() == 'ADMIN'}"
+                                        th:text="${contract.user.fullName}">Owner</td>
+                                    <td class="actions-cell" onclick="event.stopPropagation();">
+                                        <a th:if="${contract.fileName != null && !contract.fileName.isEmpty()}"
+                                            th:href="@{/contracts/download/{fn}(fn=${contract.fileName})}"
+                                            class="btn btn-sm btn-outline" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <a th:href="@{/contracts/edit/{id}(id=${contract.id})}"
+                                            class="btn btn-sm btn-outline" title="Edit">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <form
+                                            th:if="${currentUser.role.name() == 'ADMIN' || contract.user.id == currentUser.id}"
+                                            th:action="@{/contracts/delete/{id}(id=${contract.id})}" method="post"
+                                            style="display:inline"
+                                            onsubmit="return confirm('Are you sure you want to delete this contract?')">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                                <i class="fas fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        }
+    </script>
+</body>
+
+</html>

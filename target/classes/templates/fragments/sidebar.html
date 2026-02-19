@@ -1,0 +1,63 @@
+<!-- Sidebar Fragment -->
+<div th:fragment="sidebar" class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <img th:src="@{/logo.png}" alt="Pactivo" class="sidebar-logo-img">
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+        <!-- Main -->
+        <div class="nav-section-label">Main</div>
+        <a th:href="@{/dashboard}" class="nav-item"
+            th:classappend="${#strings.equals(activePage, 'dashboard')} ? 'active' : ''">
+            <i class="fas fa-grid-2"></i>
+            <span>Dashboard</span>
+        </a>
+        <a th:href="@{/contracts/add}" class="nav-item"
+            th:classappend="${#strings.equals(activePage, 'add-contract')} ? 'active' : ''">
+            <i class="fas fa-plus"></i>
+            <span>Add Contract</span>
+        </a>
+
+        <!-- Analytics -->
+        <div class="nav-section-label">Analytics</div>
+        <a th:href="@{/reports}" class="nav-item"
+            th:classappend="${#strings.equals(activePage, 'reports')} ? 'active' : ''">
+            <i class="fas fa-chart-pie"></i>
+            <span>Reports</span>
+        </a>
+
+        <!-- Activity -->
+        <div class="nav-section-label">Activity</div>
+        <a th:href="@{/notifications}" class="nav-item"
+            th:classappend="${#strings.equals(activePage, 'notifications')} ? 'active' : ''">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+            <span th:if="${notifCount != null && notifCount > 0}" class="nav-badge" th:text="${notifCount}">0</span>
+        </a>
+
+        <!-- Admin -->
+        <div th:if="${currentUser != null && currentUser.role.name() == 'ADMIN'}" class="nav-section-label">Admin</div>
+        <a th:if="${currentUser != null && currentUser.role.name() == 'ADMIN'}" th:href="@{/admin/users}"
+            class="nav-item" th:classappend="${#strings.equals(activePage, 'users')} ? 'active' : ''">
+            <i class="fas fa-users"></i>
+            <span>Users</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a th:href="@{/settings}" class="nav-item"
+            th:classappend="${#strings.equals(activePage, 'settings')} ? 'active' : ''">
+            <i class="fas fa-gear"></i>
+            <span>Settings</span>
+        </a>
+        <a th:href="@{/logout}" class="nav-item logout-item">
+            <i class="fas fa-arrow-right-from-bracket"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</div>

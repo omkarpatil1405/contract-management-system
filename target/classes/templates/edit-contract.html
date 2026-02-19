@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Contract — CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}" th:with="activePage=''"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/navbar :: navbar}" th:with="pageTitle='Edit Contract'"></div>
+
+            <div class="content-area">
+                <!-- Error Alert -->
+                <div th:if="${error}" class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${error}"></span>
+                </div>
+
+                <div class="form-card animate-fade-in">
+                    <div class="form-card-header">
+                        <h3>Edit Contract</h3>
+                    </div>
+                    <form th:action="@{/contracts/edit/{id}(id=${contract.id})}" method="post" th:object="${contract}"
+                        enctype="multipart/form-data">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="title">Title</label>
+                                <input type="text" id="title" th:field="*{title}" placeholder="Contract title" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="description">Description</label>
+                                <textarea id="description" th:field="*{description}" placeholder="Contract description"
+                                    rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="startDate">Start Date</label>
+                                <input type="date" id="startDate" th:field="*{startDate}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="endDate">End Date</label>
+                                <input type="date" id="endDate" th:field="*{endDate}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <select id="status" th:field="*{status}" required>
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="SIGNED">Signed</option>
+                                    <option value="RUNNING">Running</option>
+                                    <option value="EXPIRED">Expired</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="party">Party</label>
+                                <select id="party" th:field="*{party}">
+                                    <option value="">Select Party</option>
+                                    <option value="INTERNAL">Internal</option>
+                                    <option value="EXTERNAL">External</option>
+                                    <option value="GOVERNMENT">Government</option>
+                                    <option value="VENDOR">Vendor</option>
+                                    <option value="CLIENT">Client</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="contractType">Contract Type</label>
+                                <select id="contractType" th:field="*{contractType}">
+                                    <option value="">Select Type</option>
+                                    <option th:each="ct : ${contractTypes}" th:value="${ct}" th:text="${ct}"></option>
+                                    <option value="__ADD_NEW__">+ Add New Type...</option>
+                                </select>
+                            </div>
+                            <!-- File Upload -->
+                            <div class="form-group">
+                                <label for="file"><i class="fas fa-paperclip"></i> Attach Document</label>
+                                <div th:if="${contract.fileName != null && !contract.fileName.isEmpty()}"
+                                    class="existing-file">
+                                    <i class="fas fa-file"></i>
+                                    <a th:href="@{/contracts/download/{fn}(fn=${contract.fileName})}" class="file-link"
+                                        th:text="${contract.fileName}">filename.pdf</a>
+                                </div>
+                                <input type="file" id="file" name="file" accept=".pdf,.jpg,.jpeg,.png"
+                                    class="file-input">
+                                <small class="text-muted">Upload a new file to replace. PDF, JPG, PNG — Max 5 MB</small>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <a th:href="@{/dashboard}" class="btn btn-ghost">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Update Contract
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        }
+
+        // Handle "Add New Type..." option
+        document.getElementById('contractType').addEventListener('change', function () {
+            if (this.value === '__ADD_NEW__') {
+                const newType = prompt('Enter new contract type:');
+                if (newType && newType.trim()) {
+                    const trimmed = newType.trim();
+                    const option = document.createElement('option');
+                    option.value = trimmed;
+                    option.textContent = trimmed;
+                    const addNewOption = this.querySelector('option[value="__ADD_NEW__"]');
+                    this.insertBefore(option, addNewOption);
+                    this.value = trimmed;
+                } else {
+                    this.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
