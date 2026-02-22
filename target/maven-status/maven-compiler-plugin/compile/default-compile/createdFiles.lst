@@ -16,6 +16,7 @@ com\cms\model\Contract$Status.class
 com\cms\CmsApplication.class
 com\cms\repository\ContractRepository.class
 com\cms\model\User.class
+com\cms\service\TextExtractionService.class
 com\cms\config\GlobalModelAdvice.class
 com\cms\service\UserService.class
 com\cms\controller\AuthController.class

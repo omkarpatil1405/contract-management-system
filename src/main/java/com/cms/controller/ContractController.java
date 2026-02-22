@@ -4,6 +4,7 @@ import com.cms.model.Contract;
 import com.cms.model.User;
 import com.cms.service.ContractService;
 import com.cms.service.FileStorageService;
+import com.cms.service.TextExtractionService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -33,6 +34,9 @@ public class ContractController {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private TextExtractionService textExtractionService;
 
     // ── Add Contract (GET) ────────────────────────────────────
     @GetMapping("/add")
@@ -105,6 +109,24 @@ public class ContractController {
 
         model.addAttribute("contract", contract);
         model.addAttribute("currentUser", user);
+
+        // Extract text from attachment if present
+        String fileName = contract.getFileName();
+        if (fileName != null && !fileName.isEmpty()) {
+            model.addAttribute("isImage", textExtractionService.isImage(fileName));
+            model.addAttribute("isPdf", textExtractionService.isPdf(fileName));
+
+            if (textExtractionService.isPdf(fileName)) {
+                try {
+                    Path filePath = fileStorageService.loadFile(fileName);
+                    String text = textExtractionService.extractText(filePath);
+                    model.addAttribute("extractedText", text);
+                } catch (Exception e) {
+                    model.addAttribute("extractedText", "[Could not extract text: " + e.getMessage() + "]");
+                }
+            }
+        }
+
         return "view-contract";
     }
 

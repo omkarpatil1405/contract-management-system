@@ -44,8 +44,13 @@
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Create a password" required
-                        minlength="6" oninput="checkPasswordStrength(this.value)">
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" placeholder="Create a password" required
+                            minlength="6" oninput="checkPasswordStrength(this.value)">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                     <div class="password-strength">
                         <div class="strength-bar" id="strengthBar"></div>
                     </div>
@@ -70,6 +75,18 @@
     </div>
 
     <script>
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
         function checkPasswordStrength(password) {
             const bar = document.getElementById('strengthBar');
             const text = document.getElementById('strengthText');
