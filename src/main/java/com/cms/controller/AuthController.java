@@ -53,7 +53,7 @@ public class AuthController {
         return "redirect:/dashboard";
     }
 
-    // ── Register ──────────────────────────────────────────────
+    // ── Register (Step 1: Show form) ──────────────────────────
     @GetMapping("/register")
     public String registerPage(HttpSession session) {
         if (session.getAttribute("loggedInUser") != null) {
@@ -62,27 +62,112 @@ public class AuthController {
         return "register";
     }
 
+    // ── Register (Step 2: Validate & send OTP) ───────────────
     @PostMapping("/register")
     public String register(@RequestParam String fullName,
                            @RequestParam String username,
                            @RequestParam String email,
                            @RequestParam String password,
                            @RequestParam String role,
+                           HttpSession session,
                            RedirectAttributes redirectAttributes) {
-        User user = new User();
-        user.setFullName(fullName);
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setRole(User.Role.valueOf(role));
+        // Validate uniqueness before sending OTP
+        if (userService.existsByUsername(username)) {
+            redirectAttributes.addFlashAttribute("error", "Username already exists");
+            return "redirect:/register";
+        }
+        if (userService.existsByEmail(email)) {
+            redirectAttributes.addFlashAttribute("error", "Email already exists");
+            return "redirect:/register";
+        }
 
-        String result = userService.registerUser(user);
+        // Store registration data in session
+        User pendingUser = new User();
+        pendingUser.setFullName(fullName);
+        pendingUser.setUsername(username);
+        pendingUser.setEmail(email);
+        pendingUser.setPassword(password);
+        pendingUser.setRole(User.Role.valueOf(role));
+        session.setAttribute("regUser", pendingUser);
+
+        // Generate and store OTP in session
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        session.setAttribute("regOtp", otp);
+        session.setAttribute("regOtpExpiry", java.time.LocalDateTime.now().plusMinutes(5));
+
+        // Send OTP email
+        emailService.sendRegistrationOtpEmail(email, otp);
+
+        redirectAttributes.addFlashAttribute("step", "otp");
+        redirectAttributes.addFlashAttribute("email", email);
+        redirectAttributes.addFlashAttribute("success", "OTP has been sent to " + email);
+        return "redirect:/register";
+    }
+
+    // ── Register: Verify OTP ─────────────────────────────────
+    @PostMapping("/register/verify-otp")
+    public String verifyRegistrationOtp(@RequestParam String otp,
+                                        HttpSession session,
+                                        RedirectAttributes redirectAttributes) {
+        String storedOtp = (String) session.getAttribute("regOtp");
+        java.time.LocalDateTime expiry = (java.time.LocalDateTime) session.getAttribute("regOtpExpiry");
+        User pendingUser = (User) session.getAttribute("regUser");
+
+        if (storedOtp == null || pendingUser == null) {
+            redirectAttributes.addFlashAttribute("error", "Session expired. Please register again.");
+            return "redirect:/register";
+        }
+
+        if (!storedOtp.equals(otp)) {
+            redirectAttributes.addFlashAttribute("error", "Invalid OTP");
+            redirectAttributes.addFlashAttribute("step", "otp");
+            redirectAttributes.addFlashAttribute("email", pendingUser.getEmail());
+            return "redirect:/register";
+        }
+
+        if (expiry != null && expiry.isBefore(java.time.LocalDateTime.now())) {
+            redirectAttributes.addFlashAttribute("error", "OTP has expired. Please request a new one.");
+            redirectAttributes.addFlashAttribute("step", "otp");
+            redirectAttributes.addFlashAttribute("email", pendingUser.getEmail());
+            return "redirect:/register";
+        }
+
+        // OTP verified — create the user
+        String result = userService.registerUser(pendingUser);
         if (!"success".equals(result)) {
             redirectAttributes.addFlashAttribute("error", result);
             return "redirect:/register";
         }
+
+        // Clean up session
+        session.removeAttribute("regUser");
+        session.removeAttribute("regOtp");
+        session.removeAttribute("regOtpExpiry");
+
         redirectAttributes.addFlashAttribute("success", "Registration successful! Please login.");
         return "redirect:/login";
+    }
+
+    // ── Register: Resend OTP ─────────────────────────────────
+    @PostMapping("/register/resend-otp")
+    public String resendRegistrationOtp(HttpSession session,
+                                        RedirectAttributes redirectAttributes) {
+        User pendingUser = (User) session.getAttribute("regUser");
+        if (pendingUser == null) {
+            redirectAttributes.addFlashAttribute("error", "Session expired. Please register again.");
+            return "redirect:/register";
+        }
+
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        session.setAttribute("regOtp", otp);
+        session.setAttribute("regOtpExpiry", java.time.LocalDateTime.now().plusMinutes(5));
+
+        emailService.sendRegistrationOtpEmail(pendingUser.getEmail(), otp);
+
+        redirectAttributes.addFlashAttribute("step", "otp");
+        redirectAttributes.addFlashAttribute("email", pendingUser.getEmail());
+        redirectAttributes.addFlashAttribute("success", "New OTP has been sent to " + pendingUser.getEmail());
+        return "redirect:/register";
     }
 
     // ── Forgot Password ───────────────────────────────────────

@@ -36,7 +36,6 @@ public class SettingsController {
 
         String result = userService.updateProfile(user, fullName, email);
         if ("success".equals(result)) {
-            // Refresh session with updated user
             session.setAttribute("loggedInUser", userService.findById(user.getId()).orElse(user));
             redirectAttributes.addFlashAttribute("success", "Profile updated successfully");
         } else {
@@ -61,12 +60,24 @@ public class SettingsController {
 
         String result = userService.changePassword(user, currentPassword, newPassword);
         if ("success".equals(result)) {
-            // Refresh session
             session.setAttribute("loggedInUser", userService.findById(user.getId()).orElse(user));
             redirectAttributes.addFlashAttribute("success", "Password changed successfully");
         } else {
             redirectAttributes.addFlashAttribute("error", result);
         }
         return "redirect:/settings";
+    }
+
+    // ── Deactivate Own Account (Soft Delete) ─────────────────
+    @PostMapping("/settings/delete-account")
+    public String deactivateOwnAccount(HttpSession session,
+                                       RedirectAttributes redirectAttributes) {
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user == null) return "redirect:/login";
+
+        userService.deactivateUser(user);
+        session.invalidate();
+        redirectAttributes.addFlashAttribute("success", "Your account has been deactivated.");
+        return "redirect:/login";
     }
 }

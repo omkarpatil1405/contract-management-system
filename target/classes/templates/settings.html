@@ -121,6 +121,28 @@
                             </div>
                         </form>
                     </div>
+
+                    <!-- Danger Zone: Deactivate Account -->
+                    <div class="form-card animate-fade-in" style="border: 1px solid #3a1618;">
+                        <div class="form-card-header" style="border-bottom-color: #3a1618;">
+                            <h3 style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+                        </div>
+                        <div style="padding: 4px 0;">
+                            <p style="color: #888; font-size: 13px; margin-bottom: 16px;">
+                                Deactivating your account will set your status to inactive. You will no longer be able
+                                to
+                                log in. Your contracts will remain in the system and will be visible to administrators.
+                                Only an admin can permanently delete your account.
+                            </p>
+                            <form th:action="@{/settings/delete-account}" method="post"
+                                onsubmit="return confirm('Are you sure you want to deactivate your account? You will no longer be able to log in. Contact an admin to reactivate or permanently delete your account.')">
+                                <button type="submit" class="btn btn-sm"
+                                    style="background: #3a1618; color: #ef4444; border: 1px solid #5c2325;">
+                                    <i class="fas fa-user-slash"></i> Deactivate My Account
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

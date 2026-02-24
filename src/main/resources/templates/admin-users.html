@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users — CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="app-body">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}" th:with="activePage='users'"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/navbar :: navbar}" th:with="pageTitle='Manage Users'"></div>
+
+            <div class="content-area">
+                <!-- Alerts -->
+                <div th:if="${success}" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${success}"></span>
+                </div>
+                <div th:if="${error}" class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${error}"></span>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 th:text="${#lists.size(users)}">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 th:text="${#lists.size(users.?[status.name() == 'ACTIVE'])}">0</h3>
+                            <p>Active</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 th:text="${#lists.size(users.?[status.name() == 'INACTIVE'])}">0</h3>
+                            <p>Inactive</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3><i class="fas fa-users"></i> All Users</h3>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(users)}" style="color: #666; padding: 24px; text-align: center;">
+                        No users found.
+                    </div>
+
+                    <div th:if="${!#lists.isEmpty(users)}" style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="u : ${users}"
+                                    th:styleappend="${u.status.name() == 'INACTIVE'} ? 'opacity: 0.5;' : ''">
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div
+                                                style="width: 30px; height: 30px; border-radius: 50%; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted);">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <strong th:text="${u.fullName}">Name</strong>
+                                            <span th:if="${u.id == currentUser.id}"
+                                                style="font-size: 10px; color: var(--text-muted); background: var(--bg-primary); padding: 2px 6px; border-radius: 4px;">you</span>
+                                        </div>
+                                    </td>
+                                    <td th:text="${u.username}">username</td>
+                                    <td th:text="${u.email}">email</td>
+                                    <td>
+                                        <span class="badge"
+                                            th:classappend="${u.role.name() == 'ADMIN'} ? 'badge-purple' : 'badge-blue'"
+                                            th:text="${u.role.name()}">ROLE</span>
+                                    </td>
+                                    <td>
+                                        <span
+                                            style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 8px; border-radius: 4px;"
+                                            th:styleappend="${u.status.name() == 'ACTIVE'}
+                                                ? 'background: #052e16; color: #22c55e; border: 1px solid #14532d;'
+                                                : 'background: #1c1917; color: #a8a29e; border: 1px solid #292524;'">
+                                            <i th:classappend="${u.status.name() == 'ACTIVE'} ? 'fas fa-circle' : 'far fa-circle'"
+                                                style="font-size: 6px;"></i>
+                                            <span th:text="${u.status.name()}">ACTIVE</span>
+                                        </span>
+                                    </td>
+                                    <td style="font-size: 12px; color: var(--text-muted);"
+                                        th:text="${u.createdAt != null} ? ${#temporals.format(u.createdAt, 'dd MMM yyyy')} : '—'">
+                                        —</td>
+                                    <td style="text-align: right;">
+                                        <div th:if="${u.id != currentUser.id}" style="display: inline-flex; gap: 6px;">
+                                            <!-- Restore (only for INACTIVE) -->
+                                            <form th:if="${u.status.name() == 'INACTIVE'}"
+                                                th:action="@{/admin/users/{id}/restore(id=${u.id})}" method="post"
+                                                style="display: inline;"
+                                                onsubmit="return confirm('Restore this user? They will be able to log in again.')">
+                                                <button type="submit" class="btn btn-sm"
+                                                    style="background: #052e16; color: #22c55e; border: 1px solid #14532d; font-size: 11px; padding: 5px 12px;">
+                                                    <i class="fas fa-user-check"></i> Restore
+                                                </button>
+                                            </form>
+                                            <!-- Permanently Delete -->
+                                            <form th:action="@{/admin/users/delete/{id}(id=${u.id})}" method="post"
+                                                style="display: inline;"
+                                                onsubmit="return confirm('⚠️ PERMANENTLY delete this user and all their contracts/files? This cannot be undone.')">
+                                                <button type="submit" class="btn btn-sm"
+                                                    style="background: #3a1618; color: #ef4444; border: 1px solid #5c2325; font-size: 11px; padding: 5px 12px;">
+                                                    <i class="fas fa-trash-can"></i> Permanently Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <span th:if="${u.id == currentUser.id}"
+                                            style="color: var(--text-muted); font-size: 11px;">—</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('expanded');
+        }
+    </script>
+</body>
+
+</html>

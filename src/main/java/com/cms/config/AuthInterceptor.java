@@ -1,5 +1,6 @@
 package com.cms.config;
 
+import com.cms.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -17,6 +18,8 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (uri.equals("/") ||
             uri.equals("/login") ||
             uri.equals("/register") ||
+            uri.equals("/register/verify-otp") ||
+            uri.equals("/register/resend-otp") ||
             uri.equals("/forgot-password") ||
             uri.equals("/verify-otp") ||
             uri.equals("/reset-password") ||
@@ -30,6 +33,14 @@ public class AuthInterceptor implements HandlerInterceptor {
         // Check session
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("loggedInUser") == null) {
+            response.sendRedirect("/login");
+            return false;
+        }
+
+        // Block INACTIVE users
+        User user = (User) session.getAttribute("loggedInUser");
+        if (user.getStatus() == User.Status.INACTIVE) {
+            session.invalidate();
             response.sendRedirect("/login");
             return false;
         }

@@ -19,16 +19,30 @@
                 <div class="auth-logo">
                     <i class="fas fa-file-contract"></i>
                 </div>
-                <h1>Create account</h1>
-                <p>Get started with CMS</p>
+                <h1 th:text="${step == 'otp'} ? 'Verify email' : 'Create account'">Create account</h1>
+                <p th:text="${step == 'otp'} ? 'Enter the OTP sent to your email' : 'Get started with CMS'">Get started
+                    with CMS</p>
+            </div>
+
+            <!-- Step indicator -->
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 20px;">
+                <div style="width: 40px; height: 4px; border-radius: 2px;"
+                    th:style="${step != 'otp'} ? 'background: #fff;' : 'background: #333;'"></div>
+                <div style="width: 40px; height: 4px; border-radius: 2px;"
+                    th:style="${step == 'otp'} ? 'background: #fff;' : 'background: #333;'"></div>
             </div>
 
             <div th:if="${error}" class="alert alert-error">
                 <i class="fas fa-exclamation-circle"></i>
                 <span th:text="${error}"></span>
             </div>
+            <div th:if="${success}" class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span th:text="${success}"></span>
+            </div>
 
-            <form th:action="@{/register}" method="post" class="auth-form">
+            <!-- Step 1: Registration Form -->
+            <form th:if="${step != 'otp'}" th:action="@{/register}" method="post" class="auth-form">
                 <div class="form-group">
                     <label for="fullName">Full Name</label>
                     <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
@@ -64,9 +78,53 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">
-                    Create Account
+                    Continue
                 </button>
             </form>
+
+            <!-- Step 2: OTP Verification -->
+            <form th:if="${step == 'otp'}" th:action="@{/register/verify-otp}" method="post" class="auth-form">
+                <p style="text-align: center; color: #888; font-size: 13px; margin-bottom: 20px;">
+                    We sent a 6-digit code to <strong th:text="${email}" style="color: #fff;"></strong>
+                </p>
+                <div class="form-group">
+                    <label>Enter OTP</label>
+                    <div style="display: flex; gap: 8px; justify-content: center;">
+                        <input type="text" class="otp-input" maxlength="1" data-index="0"
+                            style="width: 44px; height: 52px; text-align: center; font-size: 20px; font-weight: 600; padding: 0; border-radius: 8px;"
+                            oninput="handleOtpInput(this, 0)" onkeydown="handleOtpKeydown(event, 0)" autofocus>
+                        <input type="text" class="otp-input" maxlength="1" data-index="1"
+                            style="width: 44px; height: 52px; text-align: center; font-size: 20px; font-weight: 600; padding: 0; border-radius: 8px;"
+                            oninput="handleOtpInput(this, 1)" onkeydown="handleOtpKeydown(event, 1)">
+                        <input type="text" class="otp-input" maxlength="1" data-index="2"
+                            style="width: 44px; height: 52px; text-align: center; font-size: 20px; font-weight: 600; padding: 0; border-radius: 8px;"
+                            oninput="handleOtpInput(this, 2)" onkeydown="handleOtpKeydown(event, 2)">
+                        <input type="text" class="otp-input" maxlength="1" data-index="3"
+                            style="width: 44px; height: 52px; text-align: center; font-size: 20px; font-weight: 600; padding: 0; border-radius: 8px;"
+                            oninput="handleOtpInput(this, 3)" onkeydown="handleOtpKeydown(event, 3)">
+                        <input type="text" class="otp-input" maxlength="1" data-index="4"
+                            style="width: 44px; height: 52px; text-align: center; font-size: 20px; font-weight: 600; padding: 0; border-radius: 8px;"
+                            oninput="handleOtpInput(this, 4)" onkeydown="handleOtpKeydown(event, 4)">
+                        <input type="text" class="otp-input" maxlength="1" data-index="5"
+                            style="width: 44px; height: 52px; text-align: center; font-size: 20px; font-weight: 600; padding: 0; border-radius: 8px;"
+                            oninput="handleOtpInput(this, 5)" onkeydown="handleOtpKeydown(event, 5)">
+                    </div>
+                    <input type="hidden" id="otp" name="otp">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    Verify &amp; Create Account
+                </button>
+            </form>
+
+            <!-- Resend OTP -->
+            <div th:if="${step == 'otp'}" style="text-align: center; margin-top: 12px;">
+                <form th:action="@{/register/resend-otp}" method="post" style="display: inline;">
+                    <button type="submit" class="auth-link"
+                        style="background: none; border: none; cursor: pointer; font-size: 13px; color: #888;">
+                        Didn't receive code? <span style="color: #fff; text-decoration: underline;">Resend OTP</span>
+                    </button>
+                </form>
+            </div>
 
             <div class="auth-footer">
                 <p>Already have an account? <a th:href="@{/login}" class="auth-link">Sign in</a></p>
@@ -112,6 +170,42 @@
             bar.style.background = level.color;
             text.textContent = level.label;
             text.style.color = level.color;
+        }
+
+        // OTP input handling
+        const otpInputs = document.querySelectorAll('.otp-input');
+
+        function collectOtp() {
+            let otp = '';
+            otpInputs.forEach(input => otp += input.value);
+            document.getElementById('otp').value = otp;
+        }
+
+        function handleOtpInput(el, index) {
+            el.value = el.value.replace(/[^0-9]/g, '');
+            if (el.value && index < 5) {
+                otpInputs[index + 1].focus();
+            }
+            collectOtp();
+        }
+
+        function handleOtpKeydown(e, index) {
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                otpInputs[index - 1].focus();
+            }
+        }
+
+        // Handle paste
+        if (otpInputs.length > 0) {
+            otpInputs[0].addEventListener('paste', function (e) {
+                e.preventDefault();
+                const data = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                for (let i = 0; i < data.length && i < 6; i++) {
+                    otpInputs[i].value = data[i];
+                }
+                if (data.length > 0) otpInputs[Math.min(data.length, 5)].focus();
+                collectOtp();
+            });
         }
     </script>
 </body>

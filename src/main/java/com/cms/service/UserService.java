@@ -1,10 +1,14 @@
 package com.cms.service;
 
+import com.cms.model.Contract;
 import com.cms.model.User;
+import com.cms.repository.ContractRepository;
+import com.cms.repository.NotificationRepository;
 import com.cms.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,7 +21,66 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ContractRepository contractRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    // ── Soft Delete (Deactivate) ─────────────────────────────
+    @Transactional
+    public void deactivateUser(User user) {
+        user.setStatus(User.Status.INACTIVE);
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    // ── Restore User (Admin only) ────────────────────────────
+    @Transactional
+    public String restoreUser(Long userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return "User not found";
+        }
+        User user = optionalUser.get();
+        if (user.getStatus() == User.Status.ACTIVE) {
+            return "User is already active";
+        }
+        user.setStatus(User.Status.ACTIVE);
+        user.setDeletedAt(null);
+        userRepository.save(user);
+        return "success";
+    }
+
+    // ── Permanent Delete (Admin only) ────────────────────────
+    @Transactional
+    public String permanentlyDeleteUser(Long userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return "User not found";
+        }
+
+        User user = optionalUser.get();
+
+        // Delete uploaded files for user's contracts
+        List<Contract> contracts = contractRepository.findByUserId(user.getId());
+        for (Contract contract : contracts) {
+            if (contract.getFileName() != null && !contract.getFileName().isEmpty()) {
+                fileStorageService.deleteFile(contract.getFileName());
+            }
+        }
+
+        // Delete contracts, notifications, then the user
+        contractRepository.deleteAll(contracts);
+        notificationRepository.deleteAll(notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId()));
+        userRepository.delete(user);
+        return "success";
+    }
 
     // ── Registration ──────────────────────────────────────────
     public String registerUser(User user) {
@@ -28,8 +91,17 @@ public class UserService {
             return "Email already exists";
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setStatus(User.Status.ACTIVE);
         userRepository.save(user);
         return "success";
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     // ── Login ─────────────────────────────────────────────────
@@ -37,6 +109,10 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findByUsername(username);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
+            // Block INACTIVE users
+            if (user.getStatus() == User.Status.INACTIVE) {
+                return null;
+            }
             if (passwordEncoder.matches(password, user.getPassword())) {
                 return user;
             }
@@ -94,6 +170,10 @@ public class UserService {
     // ── Queries ───────────────────────────────────────────────
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public List<User> getUsersByStatus(User.Status status) {
+        return userRepository.findByStatus(status);
     }
 
     public Optional<User> findByEmail(String email) {
