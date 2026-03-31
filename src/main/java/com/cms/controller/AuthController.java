@@ -6,6 +6,7 @@ import com.cms.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,9 +41,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login(@RequestParam String username,
-                        @RequestParam String password,
-                        HttpSession session,
-                        RedirectAttributes redirectAttributes) {
+            @RequestParam String password,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         User user = userService.login(username, password);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Invalid username or password");
@@ -64,12 +65,12 @@ public class AuthController {
     // ── Register (Step 2: Validate & send OTP) ───────────────
     @PostMapping("/register")
     public String register(@RequestParam String fullName,
-                           @RequestParam String username,
-                           @RequestParam String email,
-                           @RequestParam String password,
-                           @RequestParam String role,
-                           HttpSession session,
-                           RedirectAttributes redirectAttributes) {
+            @RequestParam String username,
+            @RequestParam String email,
+            @RequestParam String password,
+            @RequestParam String role,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         // Validate uniqueness before sending OTP
         if (userService.existsByUsername(username)) {
             redirectAttributes.addFlashAttribute("error", "Username already exists");
@@ -106,8 +107,8 @@ public class AuthController {
     // ── Register: Verify OTP ─────────────────────────────────
     @PostMapping("/register/verify-otp")
     public String verifyRegistrationOtp(@RequestParam String otp,
-                                        HttpSession session,
-                                        RedirectAttributes redirectAttributes) {
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         String storedOtp = (String) session.getAttribute("regOtp");
         java.time.LocalDateTime expiry = (java.time.LocalDateTime) session.getAttribute("regOtpExpiry");
         User pendingUser = (User) session.getAttribute("regUser");
@@ -150,7 +151,7 @@ public class AuthController {
     // ── Register: Resend OTP ─────────────────────────────────
     @PostMapping("/register/resend-otp")
     public String resendRegistrationOtp(HttpSession session,
-                                        RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         User pendingUser = (User) session.getAttribute("regUser");
         if (pendingUser == null) {
             redirectAttributes.addFlashAttribute("error", "Session expired. Please register again.");
@@ -177,7 +178,7 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public String sendOtp(@RequestParam String email,
-                          RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         String otp = userService.generateOtp(email);
         if ("Email not found".equals(otp)) {
             redirectAttributes.addFlashAttribute("error", "No account found with that email");
@@ -194,7 +195,7 @@ public class AuthController {
     // ── Resend OTP ────────────────────────────────────────────
     @PostMapping("/resend-otp")
     public String resendOtp(@RequestParam String email,
-                            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         String otp = userService.generateOtp(email);
         if ("Email not found".equals(otp)) {
             redirectAttributes.addFlashAttribute("error", "No account found with that email");
@@ -211,8 +212,8 @@ public class AuthController {
     // ── Verify OTP ────────────────────────────────────────────
     @PostMapping("/verify-otp")
     public String verifyOtp(@RequestParam String email,
-                            @RequestParam String otp,
-                            RedirectAttributes redirectAttributes) {
+            @RequestParam String otp,
+            RedirectAttributes redirectAttributes) {
         String result = userService.verifyOtp(email, otp);
         if (!"success".equals(result)) {
             redirectAttributes.addFlashAttribute("error", result);
@@ -228,9 +229,9 @@ public class AuthController {
     // ── Reset Password ────────────────────────────────────────
     @PostMapping("/reset-password")
     public String resetPassword(@RequestParam String email,
-                                @RequestParam String password,
-                                @RequestParam String confirmPassword,
-                                RedirectAttributes redirectAttributes) {
+            @RequestParam String password,
+            @RequestParam String confirmPassword,
+            RedirectAttributes redirectAttributes) {
         if (!password.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Passwords do not match");
             redirectAttributes.addFlashAttribute("step", "reset");

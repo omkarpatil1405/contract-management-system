@@ -26,7 +26,14 @@ public class AuthInterceptor implements HandlerInterceptor {
             uri.equals("/resend-otp") ||
             uri.startsWith("/css/") ||
             uri.startsWith("/js/") ||
-            uri.startsWith("/images/")) {
+            uri.startsWith("/images/") ||
+            uri.endsWith(".png") ||
+            uri.endsWith(".jpg") ||
+            uri.endsWith(".ico") ||
+            uri.endsWith(".svg") ||
+            uri.endsWith(".woff2") ||
+            uri.endsWith(".woff") ||
+            uri.endsWith(".ttf")) {
             return true;
         }
 
