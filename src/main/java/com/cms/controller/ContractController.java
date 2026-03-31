@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/contracts")

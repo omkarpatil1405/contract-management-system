@@ -6,7 +6,6 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Service
@@ -32,7 +31,8 @@ public class TextExtractionService {
      * Check if a file is an image (for inline rendering).
      */
     public boolean isImage(String fileName) {
-        if (fileName == null) return false;
+        if (fileName == null)
+            return false;
         String lower = fileName.toLowerCase();
         return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
     }
@@ -41,7 +41,8 @@ public class TextExtractionService {
      * Check if a file is a PDF.
      */
     public boolean isPdf(String fileName) {
-        if (fileName == null) return false;
+        if (fileName == null)
+            return false;
         return fileName.toLowerCase().endsWith(".pdf");
     }
 

@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 public class DashboardController {
@@ -57,7 +56,8 @@ public class DashboardController {
         // Fetch contracts
         List<Contract> contracts;
         if (hasFilters) {
-            contracts = contractService.filterContracts(user, keyword, filterStatus, filterParty, filterType, fromDate, toDate);
+            contracts = contractService.filterContracts(user, keyword, filterStatus, filterParty, filterType, fromDate,
+                    toDate);
         } else {
             contracts = contractService.getContractsForUser(user);
         }
@@ -92,7 +92,8 @@ public class DashboardController {
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
-        if (value == null || value.isEmpty()) return null;
+        if (value == null || value.isEmpty())
+            return null;
         try {
             return Enum.valueOf(enumClass, value.toUpperCase());
         } catch (IllegalArgumentException e) {
